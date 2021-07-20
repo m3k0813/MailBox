@@ -3,9 +3,16 @@ import pymysql
 import json
 import requests
 
-Tmp = '21.03.16 15:40'
+db = pymysql.connect(
+    user='root',
+    passwd='****',
+    host='localhost',
+    db='mailb',
+    charset='utf8'
+)
 
-Kakao_Token = "BAJa80iTuB5J238kT_Ukj9T8uSjGcMdMmP3JMworDSAAAAF6vYPC8g"
+# 카카오톡 메세지 보내기
+Kakao_Token = ""
 
 
 def Kakao(text):
@@ -23,16 +30,18 @@ def Kakao(text):
     data = {"template_object": json.dumps(post)}
     return requests.post(url, headers=header, data=data)
 
+# 다음 메일
+
 
 def Daum():
-    driver = webdriver.Chrome('C:/Users/M/PycharmProjects/chromedriver.exe')
+    driver = webdriver.Chrome('/chromedriver.exe')
     driver.implicitly_wait(2)
     driver.get(
         'https://logins.daum.net/accounts/signinform.do?url=https%3A%2F%2Fmail.daum.net%2F')
     driver.implicitly_wait(3)
 
-    my_id = ""
-    my_pwd = ""
+    my_id = "****"
+    my_pwd = "****"
 
     driver.find_element_by_name('id').send_keys(my_id)
     driver.find_element_by_name('pw').send_keys(my_pwd)
@@ -44,19 +53,19 @@ def Daum():
     # 메일 날짜 추출
     dates = driver.find_element_by_class_name('txt_date')
 
-    global Tmp
+    curs = db.cursor(pymysql.cursors.DictCursor)
 
-    if(Tmp == dates.text):
-        print("새 메일이 없습니다.")
+    curs.execute('SELECT * FROM dates;')  # select
+    date_db = curs.fetchone()
+
+    if(date_db['date'] == dates.text):
         Kakao("새 메일이 없습니다.")
     else:
-        print(titles.text)
         Kakao(titles.text)
-        Tmp = dates.text
+        print(titles.text)
 
     driver.quit()
 
 
 if __name__ == "__main__":
-    Daum()
     Daum()
