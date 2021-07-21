@@ -5,7 +5,7 @@ import requests
 
 db = pymysql.connect(
     user='root',
-    passwd='****',
+    passwd='',
     host='localhost',
     db='mailb',
     charset='utf8'
@@ -34,14 +34,14 @@ def Kakao(text):
 
 
 def Daum():
-    driver = webdriver.Chrome('/chromedriver.exe')
+    driver = webdriver.Chrome('./chromedriver.exe')
     driver.implicitly_wait(2)
     driver.get(
         'https://logins.daum.net/accounts/signinform.do?url=https%3A%2F%2Fmail.daum.net%2F')
     driver.implicitly_wait(3)
 
-    my_id = "****"
-    my_pwd = "****"
+    my_id = ""
+    my_pwd = ""
 
     driver.find_element_by_name('id').send_keys(my_id)
     driver.find_element_by_name('pw').send_keys(my_pwd)
@@ -55,16 +55,20 @@ def Daum():
 
     curs = db.cursor(pymysql.cursors.DictCursor)
 
-    curs.execute('SELECT * FROM dates;')  # select
+    curs.execute('SELECT * FROM dates;')  # Select 데이터 조회
     date_db = curs.fetchone()
 
     if(date_db['date'] == dates.text):
         Kakao("새 메일이 없습니다.")
     else:
         Kakao(titles.text)
-        print(titles.text)
 
-    driver.quit()
+        sql = "update dates set date = %s"  # 데이터 수정
+        val = (dates.text)
+        curs.execute(sql, val)
+        db.commit()
+
+        driver.quit()
 
 
 if __name__ == "__main__":
