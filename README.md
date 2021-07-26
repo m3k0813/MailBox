@@ -1,5 +1,5 @@
 # MailBox
- https://vnfmadl234.tistory.com/21
+https://vnfmadl234.tistory.com/21
 <br>
 
 ## 셀레니움을 이용해 다음, 네이버 메일을 크롤링하기
