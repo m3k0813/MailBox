@@ -1,3 +1,4 @@
+from typing import Text
 from selenium import webdriver
 import pymysql
 import json
@@ -36,7 +37,10 @@ def Kakao(text):
 
 
 def Daum():
-    driver = webdriver.Chrome('/chromedriver.exe')
+    options = webdriver.ChromeOptions()
+    options.add_argument("headless")
+    driver = webdriver.Chrome(
+        '/chromedriver.exe',  options=options)
     driver.implicitly_wait(2)
     driver.get(
         'https://logins.daum.net/accounts/signinform.do?url=https%3A%2F%2Fmail.daum.net%2F')
@@ -62,17 +66,17 @@ def Daum():
 
     if(date_db['date'] != date.text):
         Kakao("새 메일: "+title.text)
-
         sql = "update dates set date = %s"  # 데이터 수정
         val = (date.text)
         curs.execute(sql, val)
         db.commit()
-        db.close()
-        driver.quit()
+
+    driver.quit()
 
 
+# 네이버 메일
 def Naver():
-    driver = webdriver.Chrome('chromedriver.exe')
+    driver = webdriver.Chrome('/chromedriver.exe')
     driver.get(
         'https://nid.naver.com/nidlogin.login?url=http%3A%2F%2Fmail.naver.com%2F')
 
@@ -96,28 +100,34 @@ def Naver():
     driver.find_element_by_id('log.login').click()
 
     # 네이버 기기 등록
-    driver.find_element_by_id('new.save').click()
+    driver.find_element_by_id('new.dontsave').click()
     time.sleep(3)
 
     # 메일 제목
-    title = driver.find_element_by_css_selector("strong.mail_title")
-    index = title.get_attribute("mailsn")  # 메일 고유 번호
+    titles = driver.find_elements_by_css_selector("strong.mail_title")
+    dates = driver.find_elements_by_class_name("iDate")
 
     curs = db.cursor(pymysql.cursors.DictCursor)
 
     curs.execute('SELECT * FROM num;')  # Select 데이터 조회
     num_db = curs.fetchone()
 
-    if(num_db['mailsn'] != index):
-        Kakao("새 메일: "+title.text)
-        sql = "update num set mailsn = %s"  # 데이터 수정
-        val = (index)
-        curs.execute(sql, val)
-        db.commit()
-        db.close()
-        driver.quit()
+    for title, date in zip(titles, dates):
+        if(num_db['mailsn'] < date.text and title.text != "새로운 기기에서 로그인 되었습니다."):
+            Kakao("새 메일: "+title.text)
+            sql = "update num set mailsn = %s"  # 데이터 수정
+            val = (date.text)
+            curs.execute(sql, val)
+            db.commit()
+            break
+
+    driver.quit()
 
 
 if __name__ == "__main__":
-    Daum()         # 당일 메세지 시분 표시 > 고유 값 찾아야됨
-    Naver()
+    while(1):
+        print("다음 메일 시작")
+        Daum()
+        print("네이버 메일 시작")
+        Naver()
+        time.sleep(60)
