@@ -6,6 +6,7 @@ import requests
 from selenium.webdriver.common.keys import Keys
 import pyperclip
 import time
+
 db = pymysql.connect(
     user='root',
     passwd='',
@@ -98,28 +99,22 @@ def Naver():
 
     # 로그인 버튼 클릭
     driver.find_element_by_id('log.login').click()
-
-    # 네이버 기기 등록
-    driver.find_element_by_id('new.dontsave').click()
     time.sleep(3)
 
     # 메일 제목
-    titles = driver.find_elements_by_css_selector("strong.mail_title")
-    dates = driver.find_elements_by_class_name("iDate")
-
+    title = driver.find_element_by_css_selector("strong.mail_title")
+    date = driver.find_element_by_class_name("iDate")
     curs = db.cursor(pymysql.cursors.DictCursor)
 
     curs.execute('SELECT * FROM num;')  # Select 데이터 조회
     num_db = curs.fetchone()
 
-    for title, date in zip(titles, dates):
-        if(num_db['mailsn'] < date.text and title.text != "새로운 기기에서 로그인 되었습니다."):
-            Kakao("새 메일: "+title.text)
-            sql = "update num set mailsn = %s"  # 데이터 수정
-            val = (date.text)
-            curs.execute(sql, val)
-            db.commit()
-            break
+    if(num_db['mailsn'] != date.text):
+        Kakao("새 메일: "+title.text)
+        sql = "update num set mailsn = %s"  # 데이터 수정
+        val = (date.text)
+        curs.execute(sql, val)
+        db.commit()
 
     driver.quit()
 
